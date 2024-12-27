@@ -17,26 +17,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Check if the plugin directory exists and contains a lock file
-      - name: Validate Plugin Directory
-        run: |
-          if [ ! -d "${{ github.event.inputs.plugin }}" ]; then
-            echo "Error: Plugin directory '${{ github.event.inputs.plugin }}' does not exist."
-            exit 1
-          fi
-          if [ ! -f "${{ github.event.inputs.plugin }}/package-lock.json" ] && \
-             [ ! -f "${{ github.event.inputs.plugin }}/npm-shrinkwrap.json" ] && \
-             [ ! -f "${{ github.event.inputs.plugin }}/yarn.lock" ]; then
-            echo "Error: No lock file found in '${{ github.event.inputs.plugin }}'."
-            exit 1
-          fi
+      # Set the working directory to the selected plugin directory
+      - name: Set Working Directory
+        run: echo "Working directory: ${{ github.event.inputs.plugin }}"
 
-      # Set up Node.js
+      # Set up Node.js within the plugin directory
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '16'
           cache: 'npm'
+        working-directory: ${{ github.event.inputs.plugin }}
 
       # Authenticate with npm
       - name: Authenticate with npm
@@ -44,8 +35,9 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+        working-directory: ${{ github.event.inputs.plugin }}
 
-      # Install dependencies
+      # Install dependencies within the plugin directory
       - name: Install dependencies
         run: npm install
         working-directory: ${{ github.event.inputs.plugin }}
