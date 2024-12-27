@@ -48,8 +48,14 @@ jobs:
         working-directory: ${{ github.event.inputs.plugin }}
 
       # Publish to npm
+      
+      # Change to the plugin directory
+      - name: Change to plugin directory
+        run: cd ${{ github.event.inputs.plugin }}
+        
+      - run: npm ci
       - name: Publish to npm
-        run: npm publish --access public
+        run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         working-directory: ${{ github.event.inputs.plugin }}
