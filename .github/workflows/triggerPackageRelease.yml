@@ -40,16 +40,13 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
-        working-directory: ${{ github.event.inputs.plugin }}
 
       # Install dependencies within the plugin directory
       - name: Install dependencies
         run: npm install
-        working-directory: ${{ github.event.inputs.plugin }}
 
       # Publish to npm
       - name: Publish to npm
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        working-directory: ${{ github.event.inputs.plugin }}
