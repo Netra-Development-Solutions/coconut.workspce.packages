@@ -1,0 +1,50 @@
+name: Trigger NPM Package Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      plugin:
+        description: "Select the npm package to deploy"
+        required: true
+        default: "data-management"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16' # Use the version of Node.js your project requires
+          cache: 'npm'
+
+      # Change to the selected plugin directory
+      - name: Change to Selected Plugin Directory
+        run: cd ${{ github.event.inputs.plugin }}
+
+      # Authenticate with npm
+      - name: Authenticate with npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Run tests (optional)
+      - name: Run tests
+        run: npm test
+
+      # Publish to npm
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
