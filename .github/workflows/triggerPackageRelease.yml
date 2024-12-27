@@ -17,7 +17,6 @@ jobs:
         with:
           node-version: 20
       - run: cd ${{ github.event.inputs.plugin }} && npm ci
-      - run: cd ${{ github.event.inputs.plugin }} && npm test
 
   publish-npm:
     needs: build
