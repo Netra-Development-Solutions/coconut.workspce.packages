@@ -1,4 +1,4 @@
-name: Trigger NPM Package Release
+name: Node.js Package
 
 on:
   workflow_dispatch:
@@ -9,43 +9,26 @@ on:
         default: "data-management"
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      # Checkout the repository
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Set the working directory to the selected plugin directory
-      - name: Set Working Directory
-        run: | 
-            echo "Working directory: ${{ github.event.inputs.plugin }}"
-
-      # Set up Node.js within the plugin directory
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          cache-dependency-path: ${{ github.event.inputs.plugin }}/package-lock.json
           node-version: 20
-          cache: 'npm'
+      - run: cd ${{ github.event.inputs.plugin }} && npm ci
+      - run: cd ${{ github.event.inputs.plugin }} && npm test
 
-      # Change to the plugin directory
-      - name: Change to plugin directory
-        run: cd ${{ github.event.inputs.plugin }}
-
-      # Authenticate with npm
-      - name: Authenticate with npm
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      - run: cd ${{ github.event.inputs.plugin }} && npm ci
+      - run: cd ${{ github.event.inputs.plugin }} && npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
-
-      # Install dependencies within the plugin directory
-      - name: Install dependencies
-        run: npm install
-
-      - name: Publish to npm
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
