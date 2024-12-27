@@ -19,15 +19,20 @@ jobs:
 
       # Set the working directory to the selected plugin directory
       - name: Set Working Directory
-        run: echo "Working directory: ${{ github.event.inputs.plugin }}"
+        run: | 
+            echo "Working directory: ${{ github.event.inputs.plugin }}"
 
       # Set up Node.js within the plugin directory
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          cache-dependency-path: ${{ github.event.inputs.plugin }}/package-lock.json
+          node-version: 20
           cache: 'npm'
-        working-directory: ${{ github.event.inputs.plugin }}
+
+      # Change to the plugin directory
+      - name: Change to plugin directory
+        run: cd ${{ github.event.inputs.plugin }}
 
       # Authenticate with npm
       - name: Authenticate with npm
