@@ -28,6 +28,8 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org/
       - run: cd ${{ github.event.inputs.plugin }} && npm ci
+      - run: |
+          echo ${{secrets.npm_token}}
       - run: cd ${{ github.event.inputs.plugin }} && npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
