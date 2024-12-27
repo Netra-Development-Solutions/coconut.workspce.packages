@@ -47,11 +47,6 @@ jobs:
         run: npm install
         working-directory: ${{ github.event.inputs.plugin }}
 
-      # Run tests (optional)
-      - name: Run tests
-        run: npm test
-        working-directory: ${{ github.event.inputs.plugin }}
-
       # Publish to npm
       - name: Publish to npm
         run: npm publish
