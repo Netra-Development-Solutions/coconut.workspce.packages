@@ -17,15 +17,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Change to the selected plugin directory
-      - name: Change to Selected Plugin Directory
-        run: cd ${{ github.event.inputs.plugin }}
+      # Check if the plugin directory exists and contains a lock file
+      - name: Validate Plugin Directory
+        run: |
+          if [ ! -d "${{ github.event.inputs.plugin }}" ]; then
+            echo "Error: Plugin directory '${{ github.event.inputs.plugin }}' does not exist."
+            exit 1
+          fi
+          if [ ! -f "${{ github.event.inputs.plugin }}/package-lock.json" ] && \
+             [ ! -f "${{ github.event.inputs.plugin }}/npm-shrinkwrap.json" ] && \
+             [ ! -f "${{ github.event.inputs.plugin }}/yarn.lock" ]; then
+            echo "Error: No lock file found in '${{ github.event.inputs.plugin }}'."
+            exit 1
+          fi
 
       # Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16' # Use the version of Node.js your project requires
+          node-version: '16'
           cache: 'npm'
 
       # Authenticate with npm
@@ -38,13 +48,16 @@ jobs:
       # Install dependencies
       - name: Install dependencies
         run: npm install
+        working-directory: ${{ github.event.inputs.plugin }}
 
       # Run tests (optional)
       - name: Run tests
         run: npm test
+        working-directory: ${{ github.event.inputs.plugin }}
 
       # Publish to npm
       - name: Publish to npm
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: ${{ github.event.inputs.plugin }}
