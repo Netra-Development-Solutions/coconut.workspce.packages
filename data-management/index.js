@@ -1,56 +1,87 @@
 class DataManagementClass {
-    constructor(initialState = {}) {
+    constructor() {
         if (DataManagementClass.instance) {
             return DataManagementClass.instance;
         }
 
-        this.state = initialState;
-        this.listeners = new Map();
+        this.dataModels = new Map();
+        this.dataListeners = new Map();
         DataManagementClass.instance = this;
     }
 
-    // Get the current state (or part of it)
-    getState(key) {
-        return key ? this.state[key] : { ...this.state };
+    // Register a data model
+    registerModel(key, model) {
+        this.dataModels.set(key, model);
     }
 
-    // Set state and notify listeners
-    setState(updates) {
-        const keysToNotify = [];
-        for (const key in updates) {
-            if (this.state[key] !== updates[key]) {
-                this.state[key] = updates[key];
-                keysToNotify.push(key);
-            }
+    // Get a data model
+    getModelData(key) {
+        return this.dataModels.get(key);
+    }
+
+    // Recursively get data from a model
+    getModelDataPath(key, dataPath) {
+        const pathArray = dataPath.split('.');
+        let model = this.dataModels.get(key);
+
+        if (!model) {
+            return null;
         }
-        this.notify(keysToNotify);
-    }
-
-    // Subscribe to changes for a specific key or the entire state
-    subscribe(key, callback) {
-        if (!this.listeners.has(key)) {
-            this.listeners.set(key, new Set());
+        while (pathArray.length) {
+            model = model[pathArray.shift()];
         }
-        const keyListeners = this.listeners.get(key);
-        keyListeners.add(callback);
 
-        // Return an unsubscribe function
-        return () => keyListeners.delete(callback);
+        return model;
     }
 
-    // Notify listeners of changes
-    notify(keys) {
-        keys.forEach((key) => {
-            const keyListeners = this.listeners.get(key);
-            if (keyListeners) {
-                keyListeners.forEach((callback) => callback(this.state[key]));
-            }
-        });
+    // Update a data model
+    updateModelData(key, dataPath, value) {
+        const pathArray = dataPath.split('.');
+        let model = this.dataModels.get(key);
 
-        // Notify listeners for the entire state if they exist
-        const globalListeners = this.listeners.get(null);
-        if (globalListeners) {
-            globalListeners.forEach((callback) => callback(this.getState()));
+        if (!model) {
+            return null;
+        }
+        while (pathArray.length > 1) {
+            model = model[pathArray.shift()];
+        }
+        model[pathArray.shift()] = value;
+
+        if (this.dataListeners.has(key)) {
+            this.dataListeners.get(key).forEach((callback) => {
+                callback();
+            });
+        }
+    }
+
+    // Update a data model
+    updateModel(key, data) {
+        this.dataModels.set(key, data);
+
+        if (this.dataListeners.has(key)) {
+            this.dataListeners.get(key).forEach((callback) => {
+                callback();
+            });
+        }
+    }
+
+    // Deregister a data model
+    deregisterModel(key) {
+        this.dataModels.delete(key);
+    }
+
+    // Update a data model
+    subscribe(key, widgetId, callback) {
+        if (!this.dataListeners.has(key)) {
+            this.dataListeners.set(key, new Map());
+        }
+        this.dataListeners.get(key).set(widgetId, callback);
+    }
+
+    // Update a data model
+    unsubscribe(key, widgetId) {
+        if (this.dataListeners.has(key)) {
+            this.dataListeners.get(key).delete(widgetId);
         }
     }
 }
